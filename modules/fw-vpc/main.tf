@@ -40,6 +40,10 @@ resource "tencentcloud_cfw_vpc_instance" "instance" {
       }
     }
   }
+  
+  lifecycle {
+    ignore_changes = [ fw_vpc_cidr ]
+  }
 }
 
 resource "tencentcloud_cfw_vpc_policy" "policies" {
