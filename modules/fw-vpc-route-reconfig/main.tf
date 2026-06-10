@@ -5,7 +5,7 @@ locals {
   default_routetable = local.has_vpc ? [ for rt in data.tencentcloud_vpc_route_tables.route_tables.instance_list : rt ][0] : null
   # get ccn route entry infos
   ccn_route_entries = local.default_routetable != null ? [ for rei in local.default_routetable.route_entry_infos : rei if rei.next_type == "CCN" ] : []
-  republish_route_entries = [ for rei in local.ccn_route_entries : rei if rei.destination_cidr_block == "0.0.0.0/0" ]
+  republish_route_entries = [ for rei in local.ccn_route_entries : rei if rei.destination_cidr_block != "0.0.0.0/0" ]
   # route item count
   route_count = length(local.ccn_route_entries)
   republish_route_count = length(local.republish_route_entries)
