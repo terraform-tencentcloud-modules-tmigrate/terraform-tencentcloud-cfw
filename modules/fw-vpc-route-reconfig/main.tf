@@ -5,8 +5,10 @@ locals {
   default_routetable = local.has_vpc ? [ for rt in data.tencentcloud_vpc_route_tables.route_tables.instance_list : rt ][0] : null
   # get ccn route entry infos
   ccn_route_entries = local.default_routetable != null ? [ for rei in local.default_routetable.route_entry_infos : rei if rei.next_type == "CCN" ] : []
+  republish_route_entries = [ for rei in local.ccn_route_entries : rei if rei.destination_cidr_block == "0.0.0.0/0" ]
   # route item count
   route_count = length(local.ccn_route_entries)
+  republish_route_count = length(local.republish_route_entries)
 }
 
 # get vpc route tables
@@ -26,20 +28,20 @@ resource "tencentcloud_route_table_entry_config" "entry_config" {
 
 # create new HAVIP route entry for ccn
 resource "tencentcloud_route_table_entry" "havip_route_entries" {
-  count = local.route_count
+  count = local.republish_route_count
 
   route_table_id         = local.default_routetable.route_table_id
   next_type              = local.route_next_type
   next_hub               = var.gateway_id
-  destination_cidr_block = local.ccn_route_entries[count.index].destination_cidr_block
-  description            = local.ccn_route_entries[count.index].description
+  destination_cidr_block = local.republish_route_entries[count.index].destination_cidr_block
+  description            = local.republish_route_entries[count.index].description
 
   depends_on = [ tencentcloud_route_table_entry_config.entry_config ]
 }
 
 # publish route entry to ccn
 resource "tencentcloud_vpc_notify_routes" "publish_to_ccn" {
-  count = local.route_count
+  count = local.republish_route_count
 
   route_table_id = local.default_routetable.route_table_id
   route_item_ids = [tencentcloud_route_table_entry.havip_route_entries[count.index].route_item_id]
