@@ -6,9 +6,9 @@ locals {
   # get ccn route entry infos
   ccn_route_entries = local.default_routetable != null ? [ for rei in local.default_routetable.route_entry_infos : rei if rei.next_type == "CCN" ] : []
   republish_route_entries = [ for rei in local.ccn_route_entries : rei if rei.destination_cidr_block != "0.0.0.0/0" ]
-  # route item count
-  route_count = length(local.ccn_route_entries)
-  republish_route_count = length(local.republish_route_entries)
+  # maps keyed by route_entry_id
+  ccn_route_entries_map       = { for rei in local.ccn_route_entries : rei.route_entry_id => rei }
+  republish_route_entries_map = { for rei in local.republish_route_entries : rei.route_entry_id => rei }
 }
 
 # get vpc route tables
@@ -19,32 +19,32 @@ data "tencentcloud_vpc_route_tables" "route_tables" {
 
 # enbaled or disable ccn route entries
 resource "tencentcloud_route_table_entry_config" "entry_config" {
-  count = local.route_count
+  for_each = local.ccn_route_entries_map
 
   route_table_id = local.default_routetable.route_table_id
-  route_item_id  = local.ccn_route_entries[count.index].route_item_id
+  route_item_id  = each.value.route_item_id
   disabled       = true
 }
 
 # create new HAVIP route entry for ccn
 resource "tencentcloud_route_table_entry" "havip_route_entries" {
-  count = local.republish_route_count
+  for_each = local.republish_route_entries_map
 
   route_table_id         = local.default_routetable.route_table_id
   next_type              = local.route_next_type
   next_hub               = var.gateway_id
-  destination_cidr_block = local.republish_route_entries[count.index].destination_cidr_block
-  description            = local.republish_route_entries[count.index].description
+  destination_cidr_block = each.value.destination_cidr_block
+  description            = each.value.description
 
   depends_on = [ tencentcloud_route_table_entry_config.entry_config ]
 }
 
 # publish route entry to ccn
 resource "tencentcloud_vpc_notify_routes" "publish_to_ccn" {
-  count = local.republish_route_count
+  for_each = local.republish_route_entries_map
 
   route_table_id = local.default_routetable.route_table_id
-  route_item_ids = [tencentcloud_route_table_entry.havip_route_entries[count.index].route_item_id]
+  route_item_ids = [tencentcloud_route_table_entry.havip_route_entries[each.key].route_item_id]
 
   depends_on = [tencentcloud_route_table_entry.havip_route_entries]
 }
