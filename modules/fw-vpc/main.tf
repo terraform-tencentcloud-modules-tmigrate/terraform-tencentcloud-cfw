@@ -1,8 +1,8 @@
 locals {
   policy_uuid_list = [ for idx, policy in var.vpc_fw_policies : tencentcloud_cfw_vpc_policy.policies[idx].uuid ]
 
-  vpc_instances = [
-    for item in tencentcloud_cfw_vpc_instance.instance.vpc_fw_instances : {
+  vpc_instances = var.create_vpc_fw_instance ? [
+    for item in tencentcloud_cfw_vpc_instance.instance[0].vpc_fw_instances : {
       instance_id   = item.fw_ins_id
       instance_name = item.name
       havip_infos = [
@@ -13,10 +13,11 @@ locals {
         }
       ]
     }
-  ]
+  ] : []
 }
 
 resource "tencentcloud_cfw_vpc_instance" "instance" {
+  count = var.create_vpc_fw_instance ? 1 : 0
   ccn_id      = var.ccn_id
   name        = var.name
   mode        = var.mode
@@ -49,7 +50,7 @@ resource "tencentcloud_cfw_vpc_instance" "instance" {
 resource "tencentcloud_cfw_vpc_policy" "policies" {
   for_each = { for idx, policy in var.vpc_fw_policies : idx => policy }
 
-  fw_group_id = var.vpc_fw_group_id != null ? var.vpc_fw_group_id : tencentcloud_cfw_vpc_instance.instance.fw_group_id
+  fw_group_id = var.vpc_fw_group_id != null ? var.vpc_fw_group_id : tencentcloud_cfw_vpc_instance.instance[0].fw_group_id
 
   enable         = each.value.enable
   description    = each.value.description

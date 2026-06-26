@@ -1,3 +1,9 @@
+variable "create_vpc_fw_instance" {
+  description = "(Optional, Bool) Whether to create the VPC firewall instance. Default is true."
+  type        = bool
+  default     = true
+}
+
 variable "ccn_id" {
   description = "(Optional, String) Cloud networking id, suitable for cloud networking mode."
   type        = string
@@ -13,6 +19,7 @@ variable "ccn_name" {
 variable "name" {
   description = "(Required, String) VPC firewall (group) name."
   type        = string
+  default     = null
 }
 
 variable "mode" {
@@ -22,6 +29,7 @@ variable "mode" {
     condition     = contains([0, 1], var.mode)
     error_message = "mode must be 0 or 1."
   }
+  default     = null
 }
 
 variable "switch_mode" {
@@ -31,6 +39,7 @@ variable "switch_mode" {
     condition     = contains([1, 2, 4], var.switch_mode)
     error_message = "switch_mode must be 1, 2, or 4."
   }
+  default     = null
 }
 
 variable "fw_vpc_cidr" {
@@ -56,7 +65,7 @@ variable "fw_instances" {
 variable "vpc_fw_group_id" {
   description = "(Optional, String) Firewall instance ID where the rule takes effect. Default is ALL."
   type        = string
-  default     = null
+  default     = "ALL"
 }
 
 variable "vpc_fw_policies" {

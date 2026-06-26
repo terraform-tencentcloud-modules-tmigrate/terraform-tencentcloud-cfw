@@ -1,7 +1,14 @@
 # 必需参数
+variable "create_cfw_nat_instance" {
+  description = "(Optional, Bool) Whether to create the CFW NAT instance. Default is true."
+  type        = bool
+  default     = false
+}
+
 variable "mode" {
-  description = "(Required, Int) Mode 1: access mode; 0: new mode."
+  description = "(Optional, Int) Mode 1: access mode; 0: new mode. Only used when create_cfw_nat_instance is true."
   type        = number
+  default     = 1
   validation {
     condition     = contains([0, 1], var.mode)
     error_message = "mode must be 0 or 1."
@@ -9,18 +16,21 @@ variable "mode" {
 }
 
 variable "name" {
-  description = "(Required, String) Firewall instance name."
+  description = "(Optional, String) Firewall instance name. Only used when create_cfw_nat_instance is true."
   type        = string
+  default     = ""
 }
 
 variable "width" {
-  description = "(Required, Int) Bandwidth."
+  description = "(Optional, Int) Bandwidth. Only used when create_cfw_nat_instance is true."
   type        = number
+  default     = 0
 }
 
 variable "zone_set" {
-  description = "(Required, Set: [String]) Zone list."
+  description = "(Optional, Set: [String]) Zone list. Only used when create_cfw_nat_instance is true."
   type        = set(string)
+  default     = []
 }
 
 # 可选参数
@@ -50,11 +60,12 @@ variable "new_mode_items" {
 }
 
 variable "switches" {
-  description = "(Required, List) Switch list"
+  description = "(Optional, List) Switch list"
   type        = list(object({
     enable    = number # Switch, 0: off, 1: on.
     subnet_id = string # Subnet id. 
   }))
+  default = []
 }
 
 variable "inbound_policies" {
@@ -72,6 +83,7 @@ variable "inbound_policies" {
     description       = optional(string, "")     # Description.
     param_template_id = optional(string)         # Parameter template id. Note: This field may return null, indicating that no valid value can be obtained.
   }))
+  default = []
 }
 
 variable "outbound_policies" {
@@ -89,4 +101,23 @@ variable "outbound_policies" {
     description       = optional(string, "")     # Description.
     param_template_id = optional(string)         # Parameter template id. Note: This field may return null, indicating that no valid value can be obtained.
   }))
+  default = []
+}
+
+variable "cluster_nat_fw_switches" {
+  description = "(Optional, List) Cluster NAT firewall CCN switch list. Each item maps to a nat_ccn_switch block."
+  type = list(object({
+    nat_ins_id   = string # NAT firewall instance id.
+    ccn_id       = string # CCN id.
+    switch_mode  = number # Switch mode.
+    routing_mode = number # Routing mode.
+    access_instance_list = list(object({
+      instance_id      = string       # Access instance id.
+      instance_type    = string       # Access instance type, e.g. VPC.
+      instance_region  = string       # Access instance region.
+      access_cidr_mode = number       # Access cidr mode.
+      access_cidr_list = list(string) # Access cidr list.
+    }))
+  }))
+  default = []
 }

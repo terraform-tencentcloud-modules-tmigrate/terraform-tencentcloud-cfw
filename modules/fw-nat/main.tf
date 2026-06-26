@@ -4,6 +4,7 @@ locals {
 }
 
 resource "tencentcloud_cfw_nat_instance" "instance" {
+  count = var.create_cfw_nat_instance ? 1 : 0
   mode         = var.mode
   name         = var.name
   width        = var.width
@@ -26,11 +27,34 @@ resource "tencentcloud_cfw_nat_instance" "instance" {
 resource "tencentcloud_cfw_nat_firewall_switch" "switch" {
   count = length(var.switches)
 
-  nat_ins_id = tencentcloud_cfw_nat_instance.instance.id
+  nat_ins_id = tencentcloud_cfw_nat_instance.instance[0].id
   enable     = var.switches[count.index].enable
   subnet_id  = var.switches[count.index].subnet_id
 
   depends_on = [ tencentcloud_cfw_nat_instance.instance ]
+}
+
+resource "tencentcloud_cfw_cluster_nat_fw_switch" "switch" {
+  dynamic "nat_ccn_switch" {
+    for_each = var.cluster_nat_fw_switches
+    content {
+      nat_ins_id   = nat_ccn_switch.value.nat_ins_id
+      ccn_id       = nat_ccn_switch.value.ccn_id
+      switch_mode  = nat_ccn_switch.value.switch_mode
+      routing_mode = nat_ccn_switch.value.routing_mode
+
+      dynamic "access_instance_list" {
+        for_each = nat_ccn_switch.value.access_instance_list
+        content {
+          instance_id      = access_instance_list.value.instance_id
+          instance_type    = access_instance_list.value.instance_type
+          instance_region  = access_instance_list.value.instance_region
+          access_cidr_mode = access_instance_list.value.access_cidr_mode
+          access_cidr_list = access_instance_list.value.access_cidr_list
+        }
+      }
+    }
+  }
 }
 
 resource "tencentcloud_cfw_nat_policy" "inbounds" {
@@ -72,6 +96,7 @@ resource "tencentcloud_cfw_nat_policy" "outbounds" {
 }
 
 resource "tencentcloud_cfw_nat_policy_order_config" "policies_order" {
+  count = length(local.inbound_uuid_list) + length(local.outbound_uuid_list) > 0 ? 1 : 0
   inbound_rule_uuid_list = local.inbound_uuid_list
   outbound_rule_uuid_list = local.outbound_uuid_list
 
