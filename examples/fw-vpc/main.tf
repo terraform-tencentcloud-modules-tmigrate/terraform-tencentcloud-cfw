@@ -12,7 +12,7 @@ terraform {
 # ─── mock 入参，先确认结构 ───
 
 locals {
-  ccn_id      = "ccn-jm1nu99d"
+  ccn_id      = "ccn-jmxxxx"
   name        = "lz-vpc-fw"
   mode        = 1 # 0: 私网模式; 1: CCN 云联网模式
   switch_mode = 4 # 1: 单点互通; 2: 多点互通; 4: 自定义路由

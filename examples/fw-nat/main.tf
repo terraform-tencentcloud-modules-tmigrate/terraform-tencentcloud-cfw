@@ -17,20 +17,20 @@ locals {
   # 集群 NAT 防火墙 CCN 开关（可选，不填则不创建）
   cluster_nat_fw_switches = [
     {
-      nat_ins_id   = "nat-952lo14an"
-      ccn_id       = "ccn-jm1nu99d"
+      nat_ins_id   = "nat-95xxxx"
+      ccn_id       = "ccn-jmxxxxx"
       switch_mode  = 1
       routing_mode = 1
       access_instance_list = [
         {
-          instance_id      = "vpc-rwxma0yh"
+          instance_id      = "vpc-rwxxxxx"
           instance_type    = "VPC"
           instance_region  = "ap-singapore"
           access_cidr_mode = 1
           access_cidr_list = ["172.31.6.0/25"]
         },
         {
-          instance_id      = "vpc-7g00s8pl"
+          instance_id      = "vpc-rwxxxxx"
           instance_type    = "VPC"
           instance_region  = "ap-singapore"
           access_cidr_mode = 1
